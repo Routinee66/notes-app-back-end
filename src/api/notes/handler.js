@@ -16,8 +16,11 @@ class NoteHandler {
     try {
       this._validator.validateNotePayload(request.payload);
       const { title = 'untitled', body, tags } = request.payload;
+      const { id: credentialId } = request.auth.credentials;
 
-      const noteId = await this._service.addNote({ title, body, tags });
+      const noteId = await this._service.addNote({
+        title, body, tags, owner: credentialId,
+      });
 
       const response = h.response({
         status: 'success',
@@ -39,6 +42,7 @@ class NoteHandler {
         return response;
       }
 
+      // SERVER ERROR
       const response = h.response({
         status: 'fail',
         message: 'Maaf, terjadi kegagalan pada server kami',
@@ -50,8 +54,9 @@ class NoteHandler {
     }
   }
 
-  async getNotesHandler() {
-    const notes = await this._service.getNotes();
+  async getNotesHandler(request) {
+    const { id: credentialId } = request.auth.credentials;
+    const notes = await this._service.getNotes(credentialId);
 
     return {
       status: 'success',
@@ -64,6 +69,9 @@ class NoteHandler {
   async getNoteByIdHandler(request, h) {
     try {
       const { id } = request.params;
+      const { id: credentialId } = request.auth.credentials;
+
+      await this._service.verifyNoteOwner(id, credentialId);
       const note = await this._service.getNoteById(id);
 
       return {
@@ -99,9 +107,10 @@ class NoteHandler {
       this._validator.validateNotePayload(request.payload);
       const { title, body, tags } = request.payload;
       const { id } = request.params;
+      const { id: credentialId } = request.auth.credentials;
 
+      await this._service.verifyNoteOwner(id, credentialId);
       await this._service.editNoteById(id, { title, body, tags });
-      //   await this._service.editNoteById(id, request.payload);
 
       return {
         status: 'success',
@@ -132,6 +141,9 @@ class NoteHandler {
   async deleteNoteByIdHandler(request, h) {
     try {
       const { id } = request.params;
+      const { id: credentialId } = request.auth.credentials;
+
+      await this._service.verifyNoteOwner(id, credentialId);
       await this._service.deleteNoteById(id);
 
       return {
