@@ -1,4 +1,3 @@
-// const { default: mod } = require('@hapi/jwt');
 const ClientError = require('../../exceptions/ClientError');
 
 class AuthenticationHandler {
@@ -18,7 +17,6 @@ class AuthenticationHandler {
       this._validator.validatePostAuthenticationPayload(request.payload);
       const { username, password } = request.payload;
       const id = await this._usersService.verifyUserCredential(username, password);
-      //   console.log('here');
 
       const accessToken = this._tokenManager.generateAccessToken({ id });
       const refreshToken = this._tokenManager.generateRefreshToken({ id });
